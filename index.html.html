@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOPA-DF · Armazenagem de Grãos 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F0F2F5;--surface:#FFFFFF;--surface2:#F7F8FA;--surface3:#ECEEF2;
+  --text:#1A1D23;--text2:#4B5563;--text3:#9CA3AF;
+  --border:#E5E7EB;--border2:#D1D5DB;
+  --green:#16A34A;--green-bg:#DCFCE7;--green-text:#15803D;
+  --blue:#2563EB;--blue-bg:#EFF6FF;
+  --amber:#D97706;--amber-bg:#FEF3C7;--amber-text:#92400E;
+  --red:#DC2626;--red-bg:#FEE2E2;
+  --purple:#7C3AED;--purple-bg:#F5F3FF;
+  --teal:#0D9488;--teal-bg:#F0FDFA;
+  --gold:#B45309;--gold-bg:#FFFBEB;
+  --r:12px;--rs:8px;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;min-height:100vh}
+
+.topbar{background:linear-gradient(135deg,#1C1917 0%,#78350F 55%,#B45309 100%);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{display:flex;align-items:center;gap:12px}
+.topbar-logo{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.topbar-title{font-size:16px;font-weight:800;color:#fff}
+.topbar-sub{font-size:11px;color:#E7D8C9;margin-top:1px}
+.topbar-right{display:flex;gap:16px;align-items:center}
+.topbar-stat{text-align:right}
+.topbar-stat-val{font-size:15px;font-weight:700;color:#FCD34D}
+.topbar-stat-lbl{font-size:10px;color:#E7D8C9;text-transform:uppercase;letter-spacing:.05em}
+
+.main{padding:24px 32px;max-width:1600px}
+
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;position:relative;overflow:hidden}
+.metric::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.metric.green::before{background:var(--green)}
+.metric.blue::before{background:var(--blue)}
+.metric.amber::before{background:var(--amber)}
+.metric.red::before{background:var(--red)}
+.metric.purple::before{background:var(--purple)}
+.metric.gold::before{background:var(--gold)}
+.metric-lbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.metric-val{font-size:20px;font-weight:800;color:var(--text);line-height:1}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:5px}
+
+.alert-row{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:20px}
+.alert-card{border-radius:var(--r);padding:18px 20px;border:1px solid}
+.alert-card.atencao{background:#FEF3C7;border-color:#FDE68A}
+.alert-icon{font-size:24px;margin-bottom:8px}
+.alert-title{font-size:13px;font-weight:700;margin-bottom:6px}
+.alert-items{display:flex;flex-direction:column;gap:5px}
+.alert-item{font-size:11.5px;color:var(--text2);line-height:1.5}
+
+.chart-grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:20px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px}
+.chart-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.chart-sub{font-size:11px;color:var(--text3);margin-bottom:12px}
+.chart-wrap{position:relative}
+
+.bat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.bat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:border-color .15s}
+.bat-card:hover{border-color:var(--gold)}
+.bat-card.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.bat-name{font-size:12.5px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.bat-bar-track{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.bat-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),#F59E0B);border-radius:4px}
+.bat-stats{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text3)}
+.bat-stats b{color:var(--text2);font-weight:700}
+.bat-note{font-size:10px;color:var(--amber-text);margin-top:8px;display:flex;gap:5px;align-items:flex-start;background:var(--amber-bg);padding:6px 8px;border-radius:6px}
+
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.table-title{font-size:13px;font-weight:700;color:var(--text)}
+.table-sub{font-size:11px;color:var(--text3);margin-top:2px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 16px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);vertical-align:middle}
+tr:last-child td{border:none}
+tr:hover td{background:var(--surface2)}
+.td-r{text-align:right;font-weight:600}
+.td-c{text-align:center}
+
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.badge-green{background:var(--green-bg);color:var(--green-text)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-amber{background:var(--amber-bg);color:var(--amber-text)}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+.badge-gray{background:var(--surface3);color:var(--text2)}
+.badge-gold{background:var(--gold-bg);color:var(--gold)}
+.badge-brown{background:#FDF2E9;color:#92400E}
+
+.occ-bar-track{width:100px;height:7px;background:var(--surface3);border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px}
+.occ-bar-fill{height:100%;border-radius:4px}
+
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-label{font-size:11px;font-weight:600;color:var(--text2)}
+.pill{font-size:11px;padding:5px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:var(--surface);color:var(--text2);font-weight:500;transition:all .12s;font-family:inherit}
+.pill:hover{border-color:var(--border2)}
+.pill.active{background:var(--text);color:#fff;border-color:var(--text)}
+.search-input{padding:6px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;outline:none;font-family:inherit;min-width:200px}
+.search-input:focus{border-color:var(--gold)}
+
+@media(max-width:1100px){.metrics{grid-template-columns:repeat(3,1fr)}.chart-grid2{grid-template-columns:1fr}.bat-grid{grid-template-columns:1fr}}
+
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border)}
+.tab{padding:10px 18px;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;font-family:inherit}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.section{display:none}.section.active{display:block}
+
+.silo-group-title{font-size:13px;font-weight:700;color:var(--text);margin:24px 0 4px;display:flex;align-items:center;gap:8px}
+.silo-group-title:first-child{margin-top:0}
+.silo-group-sub{font-size:11px;color:var(--text3);margin-bottom:14px}
+.silo-visual-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:8px}
+.silo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 12px 12px;text-align:center;transition:transform .15s,box-shadow .15s}
+.silo-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.06)}
+.silo-card-local{font-size:11px;font-weight:700;color:var(--text);margin-top:8px}
+.silo-card-produto{font-size:9.5px;color:var(--text3);margin-top:2px;min-height:13px}
+.silo-card-pct{font-size:15px;font-weight:800;margin-top:6px}
+.silo-card-qtd{font-size:9.5px;color:var(--text3);margin-top:2px}
+.silo-card-cap{font-size:8.5px;color:var(--text3);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">🌾</div>
+    <div>
+      <div class="topbar-title">COOPA-DF · Armazenagem de Grãos 2026</div>
+      <div class="topbar-sub" id="topbar-sub">Baterias de silos, armazéns graneleiros e silo-bolsa · atualizado em 18/08/2026</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-stat"><div class="topbar-stat-val" id="topbar-ocup">—</div><div class="topbar-stat-lbl">Ocupação Geral</div></div>
+    <div class="topbar-stat"><div class="topbar-stat-val" id="topbar-unidades">—</div><div class="topbar-stat-lbl">Unidades de Armazenagem</div></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('silos',this)">🏭 Visão dos Silos</button>
+    <button class="tab" onclick="showTab('geral',this)">📊 Painel Geral</button>
+    <button class="tab" onclick="showTab('sementeiro',this)">🌱 Armazém Sementeiro</button>
+  </div>
+
+  <!-- ══ ABA: VISÃO DOS SILOS ══ -->
+  <div id="tab-silos" class="section active">
+    <div class="metrics" id="metrics-silos-topo" style="grid-template-columns:repeat(4,1fr)"></div>
+
+    <div class="filter-bar">
+      <span class="filter-label">Bateria/Complexo:</span>
+      <button class="pill active" data-vbat="todos" onclick="filtrarVisual('todos',this)">Todos</button>
+      <span id="filtro-visual-baterias"></span>
+    </div>
+
+    <div id="silos-visual"></div>
+  </div><!-- /tab-silos -->
+
+  <!-- ══ ABA: PAINEL GERAL ══ -->
+  <div id="tab-geral" class="section">
+
+  <div class="metrics" id="metrics-topo"></div>
+
+  <div class="alert-row" id="alert-avisos"></div>
+
+  <div class="chart-grid2">
+    <div class="chart-card">
+      <div class="chart-title">Capacidade vs. Estoque por complexo</div>
+      <div class="chart-sub">Volume estático (t) de cada bateria/armazém comparado ao que está ocupado hoje</div>
+      <div class="chart-wrap" style="height:300px"><canvas id="chartBaterias"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Estoque por tipo de grão</div>
+      <div class="chart-sub">Distribuição do volume armazenado</div>
+      <div class="chart-wrap" style="height:300px"><canvas id="chartGraos"></canvas></div>
+    </div>
+  </div>
+
+  <div class="bat-grid" id="bat-grid"></div>
+
+  <div class="filter-bar">
+    <span class="filter-label">Bateria/Complexo:</span>
+    <button class="pill active" data-bat="todos" onclick="filtrar('bat','todos',this)">Todos</button>
+    <span id="filtro-baterias-extra"></span>
+    <span class="filter-label" style="margin-left:12px">Grão:</span>
+    <button class="pill active" data-grao="todos" onclick="filtrar('grao','todos',this)">Todos</button>
+    <button class="pill" data-grao="Soja" onclick="filtrar('grao','Soja',this)">Soja</button>
+    <button class="pill" data-grao="Milho" onclick="filtrar('grao','Milho',this)">Milho</button>
+    <button class="pill" data-grao="Trigo" onclick="filtrar('grao','Trigo',this)">Trigo</button>
+    <button class="pill" data-grao="Sorgo" onclick="filtrar('grao','Sorgo',this)">Sorgo</button>
+    <button class="pill" data-grao="Vazio" onclick="filtrar('grao','Vazio',this)">Vazio</button>
+    <input class="search-input" type="text" placeholder="Buscar silo/célula..." oninput="buscar(this.value)" style="margin-left:auto">
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">🏭 Unidades de armazenagem</div>
+        <div class="table-sub">Todas as baterias, silos, células e armazéns cadastrados</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3)" id="contagem-tabela"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Bateria/Complexo</th>
+            <th>Local</th>
+            <th style="text-align:right">Capacidade Estática</th>
+            <th>Produto Armazenado</th>
+            <th style="text-align:right">Quantidade em Estoque</th>
+            <th style="text-align:right">Disponível</th>
+            <th style="text-align:center">Ocupação</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-silos"></tbody>
+      </table>
+    </div>
+  </div>
+
+  </div><!-- /tab-geral -->
+
+  <!-- ══ ABA: ARMAZÉM SEMENTEIRO ══ -->
+  <div id="tab-sementeiro" class="section">
+    <div class="metrics" id="metrics-sementeiro-topo" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div id="sementeiro-visual"></div>
+    <div id="sementeiro-detalhe"></div>
+  </div><!-- /tab-sementeiro -->
+
+</div><!-- /main -->
+
+<script>
+const BATERIAS = [{"nome": "Bateria de Silos COMIL", "unidade_base": "sacas", "silos": [{"local": "SILO 1", "cap": 50000, "produto": "MILHO", "qtd": 50000, "disp": 0, "cat": "Milho", "programacao": "MILHO"}, {"local": "SILO 2", "cap": 50000, "produto": "SOJA", "qtd": 50000, "disp": 0, "cat": "Soja", "programacao": "SOJA"}, {"local": "SILO 3", "cap": 50000, "produto": "SOJA", "qtd": 50000, "disp": 0, "cat": "Soja", "programacao": "SOJA"}, {"local": "SILO 4", "cap": 50000, "produto": "SOJA", "qtd": 12599, "disp": 37401, "cat": "Soja", "programacao": "TRIGO BRS 264-2026"}, {"local": "SILO 5", "cap": 50000, "produto": "MILHO", "qtd": 47878, "disp": 2122, "cat": "Milho", "programacao": "MILHO"}, {"local": "SILO 6", "cap": 50000, "produto": "TRIGO BRS 264-2026", "qtd": 0, "disp": 50000, "cat": "Trigo", "programacao": "TRIGO BRS 264-2026"}, {"local": "SILO 7", "cap": 50000, "produto": "TRIGO BRS 264-2025", "qtd": 40000, "disp": 10000, "cat": "Trigo", "programacao": "TRIGO BRS 264-2026"}, {"local": "SILO 8", "cap": 50000, "produto": "MILHO", "qtd": 12500, "disp": 37500, "cat": "Milho", "programacao": "TRIGO BRS 264-2026"}, {"local": "SILO 9", "cap": 50000, "produto": "TRIGO BRS 264-2025", "qtd": 50000, "disp": 0, "cat": "Trigo", "programacao": "TRIGO BRS 264-2026"}, {"local": "SILO 10", "cap": 50000, "produto": "MILHO", "qtd": 40500, "disp": 9500, "cat": "Milho", "programacao": "MILHO"}, {"local": "SILO 11", "cap": 50000, "produto": "MILHO", "qtd": 50000, "disp": 0, "cat": "Milho", "programacao": "MILHO"}, {"local": "SILO 12", "cap": 50000, "produto": "MILHO", "qtd": 37000, "disp": 13000, "cat": "Milho", "programacao": "MILHO"}]}, {"nome": "Bateria de Silos Moinho", "unidade_base": "sacas", "silos": [{"local": "SILO 1", "cap": 25000, "produto": "TRIGO ORS FEROZ + TRIGO BRS SAVANA", "qtd": 2000, "disp": 23000, "cat": "Trigo", "programacao": "TRIGO ORS FEROZ-2026"}, {"local": "SILO 2", "cap": 10000, "produto": null, "qtd": 0, "disp": 10000, "cat": "Vazio", "programacao": "TRIGO BRS SAVANA-2026"}, {"local": "SILO 3", "cap": 45000, "produto": null, "qtd": 0, "disp": 45000, "cat": "Vazio", "programacao": "TRIGO BRS 264-2026"}, {"local": "SILO 4", "cap": 45000, "produto": null, "qtd": 0, "disp": 45000, "cat": "Vazio", "programacao": "TRIGO BRS 264-2026"}, {"local": "SILO 5", "cap": 50000, "produto": null, "qtd": 0, "disp": 50000, "cat": "Vazio", "programacao": "TRIGO ORS FEROZ-2026"}, {"local": "SILO 6", "cap": 50000, "produto": "TRIGO ORS FEROZ + TRIGO BRS 254-2025", "qtd": 38000, "disp": 12000, "cat": "Trigo", "programacao": "TRIGO BRS 254-2025"}]}, {"nome": "Silo Bolsa — Espaço Sorgo (EMA)", "unidade_base": "sacas", "silos": [{"local": "SILO 1", "cap": 10000, "produto": "SEMENTE DE TRIGO 264-2026", "qtd": 0, "disp": 10000, "cat": "Trigo", "programacao": "SEMENTES TRIGO-2026"}, {"local": "SILO 2", "cap": 10000, "produto": "TRIGO ABSOLUTO", "qtd": 4000, "disp": 6000, "cat": "Trigo", "programacao": "SEMENTES TRIGO-2026"}]}, {"nome": "Armazém Graneleiro (Células)", "unidade_base": "sacas", "silos": [{"local": "CÉLULA 01", "cap": 183333, "produto": "SOJA", "qtd": 75000, "disp": 108333, "cat": "Soja", "programacao": "SOJA"}, {"local": "CÉLULA 02", "cap": 183333, "produto": null, "qtd": 0, "disp": 183333, "cat": "Vazio"}, {"local": "CÉLULA 03", "cap": 183334, "produto": "MILHO", "qtd": 69500, "disp": 113834, "cat": "Milho", "programacao": "MILHO"}]}, {"nome": "Silo Bolsa — Sacaria Sorgo", "unidade_base": "sacas", "silos": [{"local": "SILO BOLSA 1", "cap": 3300, "produto": "SORGO", "qtd": 3200, "disp": 100, "cat": "Sorgo", "programacao": "SORGO"}, {"local": "SILO BOLSA 2", "cap": 3300, "produto": "SORGO", "qtd": 3200, "disp": 100, "cat": "Sorgo", "programacao": "SORGO"}, {"local": "SILO BOLSA 3", "cap": 3300, "produto": "SORGO", "qtd": 1100, "disp": 2200, "cat": "Sorgo", "programacao": "SORGO"}]}, {"nome": "Armazém de Sementes de Trigo", "unidade_base": "kg", "silos": [{"local": "ARMAZÉM SEMENTES 01", "cap": 4800000, "produto": "Múltiplas variedades de trigo", "qtd": 804000, "disp": 3996000, "detalhe": [["Trigo Comercial BRS 264 (Safra 2022)", 45000, "Em negociação de venda"], ["Semente de Trigo BRS 264 \"C2\"", 122000, "Aguardar até finalizar a colheita — moído 18.000 kg (07/08/2026)"], ["Semente de Trigo BRS 264 \"S1\"", 113000, "Aguardar até finalizar a colheita — moído 18.000 kg (07/08/2026)"], ["Semente de Trigo ORS Feroz \"C1\"", 36000, ""], ["Semente de Trigo BRS Savana TR 135 BS", 111000, "Verificar com Kayla — trigo é da Embrapa"], ["Trigo Comercial BRS 254", 0, "Moído (43.000 kg)"], ["Trigo p/ Moinho Savana TR 135", 0, "Moído (17.000 kg)"], ["Trigo Absoluto Comercial C1 (moinho)", 0, "Moído (15.000 kg)"], ["Semente de Trigo ORS Feroz \"S2\"", 43000, ""], ["Semente de Trigo ORS Feroz \"C1\" (lote 2)", 22000, ""], ["Semente de Trigo BRS 254 \"C1\"", 72000, "Aguardando definição da área técnica"], ["Semente de Trigo BRS 254 Básica", 80000, "Aguardando definição da área técnica"], ["Trigo Ensaio 2025 (diversos: Savana, Spectra, Sigma, Convicto)", 0, "Moído (10.000 kg)"], ["Semente de Trigo BRS 404 (moinho: farinha)", 160000, "Reter 2 lotes (40.000 kg) até fim da colheita"]], "cat": "Trigo"}, {"local": "ARMAZÉM SEMENTES 02", "cap": 4800000, "produto": null, "qtd": 0, "disp": 4800000, "detalhe": [], "cat": "Vazio"}]}, {"nome": "Espaço Resíduos de Soja e Milho", "unidade_base": "sacas", "silos": [{"local": "ARMAZENAGEM RESÍDUOS — MILHO", "cap": 5000, "produto": "RESÍDUO DE MILHO", "qtd": 750, "disp": 4250, "cat": "Outros"}, {"local": "ARMAZENAGEM RESÍDUOS — SOJA", "cap": 5000, "produto": null, "qtd": 0, "disp": 5000, "cat": "Vazio"}]}];
+
+const CORES_GRAO = {Soja:'#16A34A', Milho:'#EAB308', Trigo:'#2563EB', Sorgo:'#92400E', Vazio:'#9CA3AF', Outros:'#6366F1'};
+
+const SACA_KG = 60;
+
+// Todos os valores internos (cap/qtd/disp) sao normalizados para SACAS DE 60KG.
+// A planilha traz a maioria das baterias ja em sacas, mas o "Armazem de Sementes
+// de Trigo" vem em KG -- entao convertemos na carga dos dados.
+function normalizaParaSacas(v, unidadeBase){
+  if(v==null) return null;
+  return unidadeBase==='kg' ? v/SACA_KG : v;
+}
+
+function fmtNum(v){ return v==null ? '—' : v.toLocaleString('pt-BR',{maximumFractionDigits:1}); }
+// v sempre em SACAS DE 60KG a partir daqui
+function fmtSacas(v){ return v==null ? '—' : v.toLocaleString('pt-BR',{maximumFractionDigits:0})+' sc'; }
+function fmtKg(v){ return v==null ? '—' : (v*SACA_KG).toLocaleString('pt-BR',{maximumFractionDigits:0})+' kg'; }
+function fmtT(v){ return v==null ? '—' : (v*SACA_KG/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' t'; }
+// bloco compacto com as 3 unidades (toneladas em destaque, kg e sacas de 60kg embaixo)
+function fmtCapMulti(v, tamanho){
+  if(v==null) return '<span style="color:var(--text3)">—</span>';
+  const tam = tamanho||'normal';
+  const fsPrincipal = tam==='mini' ? '11px' : '13px';
+  const fsSub = tam==='mini' ? '8px' : '9.5px';
+  return `<div style="font-weight:700;font-size:${fsPrincipal}">${fmtT(v)}</div>
+    <div style="font-size:${fsSub};color:var(--text3);line-height:1.4">${fmtKg(v)} · ${fmtSacas(v)}</div>`;
+}
+function fmt3Unidades(v){
+  if(v==null) return '—';
+  return `${fmtT(v)} · ${fmtKg(v)} · ${fmtSacas(v)} (60kg)`;
+}
+
+let state = {bat:'todos', grao:'todos', busca:''};
+
+// achata todos os silos com referencia a bateria, ja normalizados para sacas
+const TODOS_SILOS = [];
+BATERIAS.forEach(b=>{
+  const ub = b.unidade_base || 'sacas';
+  b.silos.forEach(s=>{
+    TODOS_SILOS.push({
+      ...s,
+      cap: normalizaParaSacas(s.cap, ub),
+      qtd: normalizaParaSacas(s.qtd, ub),
+      disp: normalizaParaSacas(s.disp, ub),
+      bateria: b.nome,
+    });
+  });
+});
+
+function calcPct(qtd, cap){
+  const q = qtd||0, c = cap||0;
+  if(c<=0) return 0; // sem capacidade definida = tratado como vazio (0%)
+  return Math.min(100, (q/c)*100);
+}
+
+function abrirDetalheSilo(idx){
+  const s = TODOS_SILOS[idx];
+  if(!s) return;
+  const pct = calcPct(s.qtd, s.cap);
+  const corFundo = pct>=90?'#DC2626':pct>=60?'#B45309':pct>0?'#16A34A':'#9CA3AF';
+  const corGrao = CORES_GRAO[s.cat] || '#9CA3AF';
+
+  let corpoHtml;
+  if(s.detalhe){
+    const bateriaObj = BATERIAS.find(b=>b.nome===s.bateria);
+    const ub = bateriaObj.unidade_base || 'sacas';
+    const linhas = s.detalhe.map(([nome,qtdRaw])=>{
+      const qtdSacas = normalizaParaSacas(qtdRaw, ub);
+      const pctVariedade = s.qtd>0 ? (qtdSacas/s.qtd*100) : 0;
+      return `<tr>
+        <td style="padding:10px 14px;font-weight:600;border-bottom:1px solid #E5E7EB">${nome}</td>
+        <td style="padding:10px 14px;text-align:right;border-bottom:1px solid #E5E7EB">${fmtT(qtdSacas)}</td>
+        <td style="padding:10px 14px;text-align:right;border-bottom:1px solid #E5E7EB;color:#6B7280;font-size:11px">${fmtKg(qtdSacas)} · ${fmtSacas(qtdSacas)}</td>
+        <td style="padding:10px 14px;text-align:right;border-bottom:1px solid #E5E7EB;color:#6B7280">${pctVariedade.toFixed(1)}%</td>
+      </tr>`;
+    }).join('');
+    corpoHtml = `
+      <h2 style="margin:0 0 4px">${s.local}</h2>
+      <div style="color:#6B7280;font-size:13px;margin-bottom:20px">${s.bateria} · Armazém com múltiplas variedades</div>
+      <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+        <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:10px;padding:14px 18px;flex:1;min-width:160px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;font-weight:700">Ocupação</div>
+          <div style="font-size:22px;font-weight:800;color:${corFundo}">${pct.toFixed(1)}%</div>
+        </div>
+        <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:10px;padding:14px 18px;flex:1;min-width:160px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;font-weight:700">Estoque total</div>
+          <div style="font-size:16px;font-weight:800">${fmtT(s.qtd)}</div>
+          <div style="font-size:10px;color:#9CA3AF">${fmtKg(s.qtd)} · ${fmtSacas(s.qtd)}</div>
+        </div>
+        <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:10px;padding:14px 18px;flex:1;min-width:160px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;font-weight:700">Capacidade estática</div>
+          <div style="font-size:16px;font-weight:800">${fmtT(s.cap)}</div>
+          <div style="font-size:10px;color:#9CA3AF">${fmtKg(s.cap)} · ${fmtSacas(s.cap)}</div>
+        </div>
+      </div>
+      <h3 style="margin:0 0 10px;font-size:14px">Variedades armazenadas (${s.detalhe.length})</h3>
+      <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #E5E7EB;border-radius:10px;overflow:hidden">
+        <thead><tr style="background:#F3F4F6">
+          <th style="padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;color:#6B7280">Variedade</th>
+          <th style="padding:10px 14px;text-align:right;font-size:10px;text-transform:uppercase;color:#6B7280">Quantidade</th>
+          <th style="padding:10px 14px;text-align:right;font-size:10px;text-transform:uppercase;color:#6B7280">Kg / Sacas</th>
+          <th style="padding:10px 14px;text-align:right;font-size:10px;text-transform:uppercase;color:#6B7280">% do total</th>
+        </tr></thead>
+        <tbody>${linhas}</tbody>
+      </table>`;
+  } else {
+    corpoHtml = `
+      <h2 style="margin:0 0 4px">${s.local}</h2>
+      <div style="color:#6B7280;font-size:13px;margin-bottom:20px">${s.bateria}</div>
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px;flex-wrap:wrap">
+        <div style="width:80px;height:80px;border-radius:50%;background:conic-gradient(${corGrao} ${pct}%, #E5E7EB ${pct}% 100%);display:flex;align-items:center;justify-content:center">
+          <div style="width:58px;height:58px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:${corFundo}">${pct.toFixed(0)}%</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700">Produto armazenado</div>
+          <div style="font-size:18px;font-weight:800;color:${corGrao}">${s.produto||'Vazio'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:10px;padding:14px 18px;flex:1;min-width:160px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;font-weight:700">Capacidade estática</div>
+          <div style="font-size:16px;font-weight:800">${fmtT(s.cap)}</div>
+          <div style="font-size:10px;color:#9CA3AF">${fmtKg(s.cap)} · ${fmtSacas(s.cap)}</div>
+        </div>
+        <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:10px;padding:14px 18px;flex:1;min-width:160px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;font-weight:700">Quantidade em estoque</div>
+          <div style="font-size:16px;font-weight:800">${fmtT(s.qtd)}</div>
+          <div style="font-size:10px;color:#9CA3AF">${fmtKg(s.qtd)} · ${fmtSacas(s.qtd)}</div>
+        </div>
+        <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:10px;padding:14px 18px;flex:1;min-width:160px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;font-weight:700">Disponível</div>
+          <div style="font-size:16px;font-weight:800">${fmtT(s.disp)}</div>
+          <div style="font-size:10px;color:#9CA3AF">${fmtKg(s.disp)} · ${fmtSacas(s.disp)}</div>
+        </div>
+      </div>
+      ${s.programacao?`<div style="margin-top:16px;background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:14px 18px">
+        <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;font-weight:700">Programação 2026/2027</div>
+        <div style="font-size:15px;font-weight:700;color:#1A1D23;margin-top:2px">${s.programacao}</div>
+      </div>`:''}`;
+  }
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>${s.local} — ${s.bateria}</title>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:'Inter',system-ui,sans-serif;background:#F0F2F5;color:#1A1D23;padding:32px;margin:0}
+      .wrap{max-width:760px;margin:0 auto;background:#fff;border-radius:14px;padding:32px;border:1px solid #E5E7EB}
+    </style></head>
+    <body><div class="wrap">${corpoHtml}</div></body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
+function calcBateria(b){
+  const ub = b.unidade_base || 'sacas';
+  const cap = b.silos.reduce((s,x)=>s+(normalizaParaSacas(x.cap,ub)||0),0);
+  const qtd = b.silos.reduce((s,x)=>s+(normalizaParaSacas(x.qtd,ub)||0),0);
+  const disp = b.silos.reduce((s,x)=>s+(normalizaParaSacas(x.disp,ub)||0),0);
+  const pct = calcPct(qtd, cap);
+  return {cap, qtd, disp, pct};
+}
+
+function initMetrics(){
+  const capTotal = BATERIAS.reduce((s,b)=>s+calcBateria(b).cap,0);
+  const qtdTotal = BATERIAS.reduce((s,b)=>s+calcBateria(b).qtd,0);
+  const dispTotal = BATERIAS.reduce((s,b)=>s+calcBateria(b).disp,0);
+  const ocupPct = capTotal>0 ? (qtdTotal/capTotal*100) : 0;
+  const nUnidades = TODOS_SILOS.length;
+  const nBaterias = BATERIAS.length;
+  const semDados = TODOS_SILOS.filter(s=>s.cap==null).length;
+
+  document.getElementById('metrics-topo').innerHTML = `
+    <div class="metric gold"><div class="metric-lbl">Capacidade Estática Total</div><div class="metric-val">${fmtT(capTotal)}</div><div class="metric-sub">${fmtKg(capTotal)} · ${fmtSacas(capTotal)} (60kg)</div></div>
+    <div class="metric amber"><div class="metric-lbl">Estoque Total</div><div class="metric-val">${fmtT(qtdTotal)}</div><div class="metric-sub">${fmtKg(qtdTotal)} · ${fmtSacas(qtdTotal)} · ${ocupPct.toFixed(1)}% da capacidade</div></div>
+    <div class="metric green"><div class="metric-lbl">Disponível Total</div><div class="metric-val">${fmtT(dispTotal)}</div><div class="metric-sub">${fmtKg(dispTotal)} · ${fmtSacas(dispTotal)}</div></div>
+    <div class="metric blue"><div class="metric-lbl">Unidades de Armazenagem</div><div class="metric-val">${nUnidades}</div><div class="metric-sub">Silos, células e armazéns</div></div>
+    <div class="metric purple"><div class="metric-lbl">Baterias/Complexos</div><div class="metric-val">${nBaterias}</div><div class="metric-sub">Locais físicos distintos</div></div>
+    <div class="metric red"><div class="metric-lbl">Unidades sem dados</div><div class="metric-val">${semDados}</div><div class="metric-sub">Aguardando preenchimento</div></div>`;
+
+  document.getElementById('topbar-ocup').textContent = ocupPct.toFixed(1)+'%';
+  document.getElementById('topbar-unidades').textContent = nUnidades;
+}
+
+function initAvisos(){
+  const notas = BATERIAS.filter(b=>b.obs).map(b=>`<div class="alert-item">📍 <strong>${b.nome}:</strong> ${b.obs}</div>`).join('');
+  document.getElementById('alert-avisos').innerHTML = `
+    <div class="alert-card atencao">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-title">Pontos para checar na planilha original</div>
+      <div class="alert-items">${notas}</div>
+    </div>`;
+}
+
+function initCharts(){
+  const labels = BATERIAS.map(b=>b.nome.replace('Armazém Graneleiro ','Graneleiro '));
+  const caps = BATERIAS.map(b=>calcBateria(b).cap);
+  const qtds = BATERIAS.map(b=>calcBateria(b).qtd);
+
+  new Chart(document.getElementById('chartBaterias'),{
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'Capacidade Estática', data:caps, backgroundColor:'rgba(180,83,9,.25)', borderRadius:3},
+      {label:'Estoque Atual', data:qtds, backgroundColor:'rgba(180,83,9,.85)', borderRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+      scales:{y:{ticks:{callback:v=>(v/1000)+'k'},grid:{color:'#E5E7EB'}},x:{grid:{display:false},ticks:{font:{size:9}}}}}
+  });
+
+  const porGrao = {};
+  TODOS_SILOS.forEach(s=>{ if(s.qtd){ porGrao[s.cat]=(porGrao[s.cat]||0)+s.qtd; } });
+  const graoLabels = Object.keys(porGrao);
+  new Chart(document.getElementById('chartGraos'),{
+    type:'doughnut',
+    data:{labels:graoLabels, datasets:[{data:graoLabels.map(g=>porGrao[g]), backgroundColor:graoLabels.map(g=>CORES_GRAO[g]||'#9CA3AF'), borderWidth:2, borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:12}}}}
+  });
+}
+
+function initBatGrid(){
+  document.getElementById('bat-grid').innerHTML = BATERIAS.map(b=>{
+    const c = calcBateria(b);
+    const pctTxt = c.pct==null ? '—' : c.pct.toFixed(1)+'%';
+    const cor = c.pct==null?'#9CA3AF':c.pct>=90?'#DC2626':c.pct>=60?'#B45309':'#16A34A';
+    return `<div class="bat-card" onclick="filtrarPorCard('${b.nome}')">
+      <div class="bat-name"><span>${b.nome}</span><span style="color:${cor}">${pctTxt}</span></div>
+      <div class="bat-bar-track"><div class="bat-bar-fill" style="width:${c.pct||0}%;background:${cor}"></div></div>
+      <div class="bat-stats"><span>Cap: <b>${fmtT(c.cap)}</b></span><span>Estoque: <b>${fmtT(c.qtd)}</b></span></div>
+      ${b.obs?`<div class="bat-note">⚠️ ${b.obs.slice(0,90)}${b.obs.length>90?'...':''}</div>`:''}
+    </div>`;
+  }).join('');
+
+  const extras = BATERIAS.map(b=>`<button class="pill" data-bat="${b.nome}" onclick="filtrar('bat','${b.nome}',this)">${b.nome}</button>`).join('');
+  document.getElementById('filtro-baterias-extra').innerHTML = extras;
+}
+
+function filtrarPorCard(nome){
+  state.bat = nome;
+  document.querySelectorAll('.filter-bar [data-bat]').forEach(p=>p.classList.remove('active'));
+  const btn = document.querySelector(`.filter-bar [data-bat="${nome}"]`);
+  if(btn) btn.classList.add('active');
+  renderTabela();
+  window.scrollTo({top:document.querySelector('.filter-bar').offsetTop-20, behavior:'smooth'});
+}
+
+function filtrar(tipo, valor, btn){
+  state[tipo] = valor;
+  const sel = tipo==='bat' ? '[data-bat]' : '[data-grao]';
+  document.querySelectorAll('.filter-bar '+sel).forEach(p=>p.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderTabela();
+}
+function buscar(v){ state.busca = v; renderTabela(); }
+
+function getLista(){
+  return TODOS_SILOS.filter(s=>{
+    if(state.bat!=='todos' && s.bateria!==state.bat) return false;
+    if(state.grao!=='todos' && s.cat!==state.grao) return false;
+    if(state.busca){
+      const b = state.busca.toLowerCase();
+      if(!s.local.toLowerCase().includes(b) && !s.bateria.toLowerCase().includes(b)) return false;
+    }
+    return true;
+  });
+}
+
+function renderTabela(){
+  const lista = getLista();
+  document.getElementById('contagem-tabela').textContent = `${lista.length} unidade(s)`;
+
+  document.getElementById('tbody-silos').innerHTML = lista.map(s=>{
+    const pct = calcPct(s.qtd, s.cap);
+    const pctTxt = pct.toFixed(0)+'%';
+    const cor = pct>=90?'#DC2626':pct>=60?'#B45309':pct>0?'#16A34A':'#9CA3AF';
+    const graoCls = {Soja:'badge-green',Milho:'badge-amber',Trigo:'badge-blue',Sorgo:'badge-brown',Vazio:'badge-gray',Outros:'badge-blue'}[s.cat]||'badge-gray';
+    const detalheTitle = s.detalhe ? ` title="${s.detalhe.map(d=>d[0]+': '+fmtSacas(normalizaParaSacas(d[1], BATERIAS.find(b=>b.nome===s.bateria).unidade_base||'sacas'))).join(' | ')}"` : '';
+    const idx = TODOS_SILOS.indexOf(s);
+    const clickAction = s.bateria==='Armazém de Sementes de Trigo' ? 'irParaSementeiro()' : `abrirDetalheSilo(${idx})`;
+    return `<tr onclick="${clickAction}" style="cursor:pointer">
+      <td style="color:var(--text3);font-size:11px">${s.bateria}</td>
+      <td style="font-weight:600">${s.local}</td>
+      <td class="td-r">${s.cap==null?'<span style="color:var(--text3)">—</span>':`${fmtT(s.cap)}<div style="font-size:9.5px;color:var(--text3);font-weight:400">${fmtKg(s.cap)} · ${fmtSacas(s.cap)}</div>`}</td>
+      <td${detalheTitle}><span class="badge ${graoCls}">${s.produto||'Vazio'}</span></td>
+      <td class="td-r">${fmtT(s.qtd)}</td>
+      <td class="td-r">${fmtT(s.disp)}</td>
+      <td class="td-c">${`<span class="occ-bar-track"><span class="occ-bar-fill" style="width:${pct}%;background:${cor}"></span></span>${pctTxt}`}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Nenhuma unidade encontrada.</td></tr>`;
+}
+
+// ══════════════════════════════════════════════
+// ── TABS ──
+// ══════════════════════════════════════════════
+function showTab(id, btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if(btn){
+    btn.classList.add('active');
+  } else {
+    const tabBtn = [...document.querySelectorAll('.tab')].find(b=>b.getAttribute('onclick').includes(`'${id}'`));
+    if(tabBtn) tabBtn.classList.add('active');
+  }
+  if(id==='sementeiro') initSementeiro();
+}
+
+function irParaSementeiro(){
+  showTab('sementeiro');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ══════════════════════════════════════════════
+// ── VISÃO DOS SILOS (SVG) ──
+// ══════════════════════════════════════════════
+let svgIdSeq = 0;
+function svgSilo(pct, cor, semDados){
+  const id = 'clip'+(svgIdSeq++);
+  const bodyTop = 35, bodyH = 90, bodyX = 8, bodyW = 64;
+  const p = semDados ? 0 : Math.max(0, Math.min(100, pct||0));
+  const fillH = bodyH * p/100;
+  const fillY = bodyTop + (bodyH - fillH);
+  const corFill = semDados ? '#E2E8F0' : cor;
+  return `<svg viewBox="0 0 80 140" width="72" height="126">
+    <path d="M5,35 L40,8 L75,35 Z" fill="#CBD5E1"/>
+    <defs><clipPath id="${id}"><rect x="${bodyX}" y="${bodyTop}" width="${bodyW}" height="${bodyH}" rx="5"/></clipPath></defs>
+    <rect x="${bodyX}" y="${bodyTop}" width="${bodyW}" height="${bodyH}" rx="5" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1.5"/>
+    ${p>0 ? `<rect x="${bodyX}" y="${fillY}" width="${bodyW}" height="${fillH}" fill="${corFill}" clip-path="url(#${id})"/>` : ''}
+    <line x1="26" y1="${bodyTop}" x2="26" y2="${bodyTop+bodyH}" stroke="#CBD5E1" stroke-width="0.7"/>
+    <line x1="54" y1="${bodyTop}" x2="54" y2="${bodyTop+bodyH}" stroke="#CBD5E1" stroke-width="0.7"/>
+    <rect x="${bodyX}" y="${bodyTop}" width="${bodyW}" height="${bodyH}" rx="5" fill="none" stroke="#94A3B8" stroke-width="1.2"/>
+    <rect x="17" y="125" width="6" height="11" fill="#94A3B8" rx="1"/>
+    <rect x="57" y="125" width="6" height="11" fill="#94A3B8" rx="1"/>
+  </svg>`;
+}
+
+// Armazém graneleiro: galpão horizontal arqueado (tipo quonset), dividido em N células
+function svgArmazemGraneleiro(celulas, onClick){
+  const W = 720, H = 260;
+  const floorY = 220, roofBaseY = 95, apexY = 20, wallX0 = 20, wallX1 = 700;
+  const n = celulas.length;
+  const gap = 8;
+  const larguraCel = (wallX1-wallX0-gap*(n-1))/n;
+
+  // telhado triangular unico, compartilhado por todas as celulas
+  const centerX = (wallX0+wallX1)/2;
+  const telhado = `<path d="M${wallX0-10},${roofBaseY} Q${centerX},${apexY-10} ${wallX1+10},${roofBaseY} Z" fill="#CBD5E1"/>`;
+
+  const celulasEl = celulas.map((c,i)=>{
+    const x = wallX0 + i*(larguraCel+gap);
+    const clipId = 'clipCel'+(svgIdSeq++);
+    const p = Math.max(0, Math.min(100, c.pct||0));
+    const bodyH = floorY - roofBaseY;
+    const fillH = bodyH * p/100;
+    const fillY = floorY - fillH;
+    const cor = c.cor;
+    const pctTxt = p.toFixed(0)+'%';
+    const xCenter = x + larguraCel/2;
+    const clickAttr = onClick ? onClick(c) : `abrirDetalheSilo(${c.idx})`;
+    return `
+      <g onclick="${clickAttr}" style="cursor:pointer">
+      <defs><clipPath id="${clipId}"><rect x="${x}" y="${roofBaseY}" width="${larguraCel}" height="${bodyH}" rx="10"/></clipPath></defs>
+      <rect x="${x}" y="${roofBaseY}" width="${larguraCel}" height="${bodyH}" rx="10" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
+      ${p>0 ? `<rect x="${x}" y="${fillY}" width="${larguraCel}" height="${fillH}" fill="${cor}" opacity="0.88" clip-path="url(#${clipId})"/>` : ''}
+      <rect x="${x}" y="${roofBaseY}" width="${larguraCel}" height="${bodyH}" rx="10" fill="none" stroke="#94A3B8" stroke-width="1.8"/>
+      <text x="${xCenter}" y="${(roofBaseY+floorY)/2-4}" text-anchor="middle" font-size="22" font-weight="800" fill="#1A1D23">${pctTxt}</text>
+      <text x="${xCenter}" y="${floorY+24}" text-anchor="middle" font-size="11" font-weight="700" fill="#4B5563">${c.local}</text>
+      <text x="${xCenter}" y="${floorY+38}" text-anchor="middle" font-size="9.5" fill="#9CA3AF">${c.produto||'vazio'}</text>
+      <text x="${xCenter}" y="${floorY+54}" text-anchor="middle" font-size="8.5" fill="#9CA3AF">Cap: ${fmtT(c.cap)}</text>
+      <text x="${xCenter}" y="${floorY+66}" text-anchor="middle" font-size="8.5" fill="#9CA3AF">${fmtKg(c.cap)} · ${fmtSacas(c.cap)}</text>
+      ${c.programacao?`<text x="${xCenter}" y="${floorY+80}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#1A1D23">Prog. 26/27: ${c.programacao}</text>`:''}
+      </g>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${W} ${H+80}" width="100%" style="max-width:640px">
+    ${telhado}
+    ${celulasEl}
+  </svg>`;
+}
+
+let visualState = {bat:'todos'};
+
+function initMetricsSilosVisuais(){
+  const capTotal = BATERIAS.reduce((s,b)=>s+calcBateria(b).cap,0);
+  const qtdTotal = BATERIAS.reduce((s,b)=>s+calcBateria(b).qtd,0);
+  const ocupPct = capTotal>0 ? (qtdTotal/capTotal*100) : 0;
+  const cheios = TODOS_SILOS.filter(s=>s.cap && s.qtd!=null && (s.qtd/s.cap*100)>=90).length;
+  const vazios = TODOS_SILOS.filter(s=>!s.qtd || s.qtd===0).length;
+  document.getElementById('metrics-silos-topo').style.gridTemplateColumns = 'repeat(5,1fr)';
+  document.getElementById('metrics-silos-topo').innerHTML = `
+    <div class="metric gold"><div class="metric-lbl">Capacidade Estática Total</div><div class="metric-val">${fmtT(capTotal)}</div><div class="metric-sub">${fmtKg(capTotal)} · ${fmtSacas(capTotal)} (60kg)</div></div>
+    <div class="metric amber"><div class="metric-lbl">Ocupação Geral</div><div class="metric-val">${ocupPct.toFixed(1)}%</div><div class="metric-sub">${fmtT(qtdTotal)} de ${fmtT(capTotal)}</div></div>
+    <div class="metric red"><div class="metric-lbl">Unidades cheias (≥90%)</div><div class="metric-val">${cheios}</div><div class="metric-sub">de ${TODOS_SILOS.length} unidades</div></div>
+    <div class="metric green"><div class="metric-lbl">Unidades vazias/livres</div><div class="metric-val">${vazios}</div><div class="metric-sub">sem estoque no momento</div></div>
+    <div class="metric blue"><div class="metric-lbl">Baterias/Complexos</div><div class="metric-val">${BATERIAS.length}</div><div class="metric-sub">locais físicos distintos</div></div>`;
+}
+
+function filtrarVisual(bat, btn){
+  visualState.bat = bat;
+  document.querySelectorAll('#tab-silos .filter-bar [data-vbat]').forEach(p=>p.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderSilosVisuais();
+}
+
+function initFiltroVisual(){
+  document.getElementById('filtro-visual-baterias').innerHTML = BATERIAS.map(b=>
+    `<button class="pill" data-vbat="${b.nome}" onclick="filtrarVisual('${b.nome}',this)">${b.nome}</button>`
+  ).join('');
+}
+
+function renderSilosVisuais(){
+  const gruposMostrar = visualState.bat==='todos' ? BATERIAS : BATERIAS.filter(b=>b.nome===visualState.bat);
+  document.getElementById('silos-visual').innerHTML = gruposMostrar.map(b=>{
+    const c = calcBateria(b);
+    const pctTxt = c.pct.toFixed(1)+'%';
+    const isGaleraoCelulas = b.nome === 'Armazém Graneleiro (Células)';
+    const isSementeiro = b.nome === 'Armazém de Sementes de Trigo';
+    const silosNorm = TODOS_SILOS.filter(s=>s.bateria===b.nome);
+
+    let corpo;
+    if(isGaleraoCelulas || isSementeiro){
+      const celulas = silosNorm.map((s,i)=>{
+        const pct = calcPct(s.qtd, s.cap);
+        return {local:s.local, produto:s.produto, pct, semDados:false, cor: CORES_GRAO[s.cat]||'#9CA3AF', cap:s.cap, idx:TODOS_SILOS.indexOf(s), programacao:s.programacao};
+      });
+      const onClick = isSementeiro ? (()=>`irParaSementeiro()`) : null;
+      corpo = `<div style="display:flex;justify-content:flex-start;padding:12px 0">${svgArmazemGraneleiro(celulas, onClick)}</div>`;
+    } else {
+      const cards = silosNorm.map(s=>{
+        const pct = calcPct(s.qtd, s.cap);
+        const cor = CORES_GRAO[s.cat] || '#9CA3AF';
+        const pctCor = pct>=90?'#DC2626':pct>=60?'#B45309':pct>0?'#16A34A':'#9CA3AF';
+        const idx = TODOS_SILOS.indexOf(s);
+        return `<div class="silo-card" onclick="abrirDetalheSilo(${idx})" style="cursor:pointer">
+          ${svgSilo(pct, cor, false)}
+          <div class="silo-card-local">${s.local}</div>
+          <div class="silo-card-produto">${s.produto||'vazio'}</div>
+          <div class="silo-card-pct" style="color:${pctCor}">${pct.toFixed(0)}%</div>
+          <div class="silo-card-qtd">${fmtT(s.qtd)} em estoque</div>
+          <div class="silo-card-cap">Cap: ${fmtT(s.cap)}<br>${fmtKg(s.cap)} · ${fmtSacas(s.cap)}</div>
+          ${s.programacao?`<div style="font-size:8.5px;color:var(--text);font-weight:700;margin-top:5px;padding-top:5px;border-top:1px dashed var(--border)">Programação 2026/2027<br><span style="font-weight:600">${s.programacao}</span></div>`:''}
+        </div>`;
+      }).join('');
+      corpo = `<div class="silo-visual-grid">${cards}</div>`;
+    }
+
+    return `<div>
+      <div class="silo-group-title">🏭 ${b.nome} <span style="font-weight:400;color:var(--text3);font-size:11px">— ${pctTxt} ocupado (${fmtT(c.qtd)} / ${fmtT(c.cap)})</span></div>
+      ${b.obs?`<div class="silo-group-sub">⚠️ ${b.obs}</div>`:''}
+      ${corpo}
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// ── ABA ARMAZÉM SEMENTEIRO ──
+// ══════════════════════════════════════════════
+let sementeiroInit = false;
+function initSementeiro(){
+  const bat = BATERIAS.find(b=>b.nome==='Armazém de Sementes de Trigo');
+  const silosNorm = TODOS_SILOS.filter(s=>s.bateria==='Armazém de Sementes de Trigo');
+  const c = calcBateria(bat);
+  const totalVariedades = silosNorm.reduce((s,x)=>s+(x.detalhe?x.detalhe.length:0),0);
+
+  document.getElementById('metrics-sementeiro-topo').innerHTML = `
+    <div class="metric gold"><div class="metric-lbl">Capacidade Estática Total</div><div class="metric-val">${fmtT(c.cap)}</div><div class="metric-sub">${fmtKg(c.cap)} · ${fmtSacas(c.cap)}</div></div>
+    <div class="metric amber"><div class="metric-lbl">Estoque Total</div><div class="metric-val">${fmtT(c.qtd)}</div><div class="metric-sub">${c.pct.toFixed(1)}% ocupado</div></div>
+    <div class="metric blue"><div class="metric-lbl">Armazéns</div><div class="metric-val">${silosNorm.length}</div><div class="metric-sub">Armazém Sementes 01 e 02</div></div>
+    <div class="metric purple"><div class="metric-lbl">Variedades cadastradas</div><div class="metric-val">${totalVariedades}</div><div class="metric-sub">Lotes distintos de sementes</div></div>`;
+
+  const celulas = silosNorm.map(s=>({
+    local:s.local, produto:s.produto, pct:calcPct(s.qtd,s.cap), semDados:false,
+    cor: CORES_GRAO[s.cat]||'#9CA3AF', cap:s.cap, idx:TODOS_SILOS.indexOf(s),
+  }));
+  document.getElementById('sementeiro-visual').innerHTML = `
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="chart-title">🌱 Armazém de Sementes de Trigo</div>
+      <div class="chart-sub">Clique em uma variedade da tabela abaixo para mais contexto — os dois armazéns compartilham a mesma capacidade-padrão</div>
+      <div style="display:flex;justify-content:flex-start;padding:12px 0">${svgArmazemGraneleiro(celulas, ()=>'')}</div>
+    </div>`;
+
+  document.getElementById('sementeiro-detalhe').innerHTML = silosNorm.map(s=>{
+    const ub = bat.unidade_base || 'sacas';
+    const linhas = (s.detalhe||[]).map(([nome,qtdRaw,obs])=>{
+      const qtdSacas = normalizaParaSacas(qtdRaw, ub);
+      const qtdKg = qtdSacas*60;
+      const qtdTon = qtdKg/1000;
+      const pctVariedade = s.qtd>0 ? (qtdSacas/s.qtd*100) : 0;
+      return `<tr>
+        <td style="padding:10px 14px;font-weight:600;border-bottom:1px solid var(--border)">${nome}</td>
+        <td class="td-r" style="border-bottom:1px solid var(--border)">${qtdTon.toLocaleString('pt-BR',{maximumFractionDigits:1})} t</td>
+        <td class="td-r" style="border-bottom:1px solid var(--border)">${fmtKg(qtdSacas)}</td>
+        <td class="td-r" style="border-bottom:1px solid var(--border)">${fmtSacas(qtdSacas)}</td>
+        <td class="td-r" style="border-bottom:1px solid var(--border);color:var(--text3)">${pctVariedade.toFixed(1)}%</td>
+        <td style="padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text2);font-size:11.5px;max-width:280px">${obs||'—'}</td>
+      </tr>`;
+    }).join('');
+    const pct = calcPct(s.qtd, s.cap);
+    return `<div class="table-card">
+      <div class="table-header">
+        <div>
+          <div class="table-title">📦 ${s.local}</div>
+          <div class="table-sub">${pct.toFixed(1)}% ocupado — ${fmtT(s.qtd)} de ${fmtT(s.cap)} — ${(s.detalhe||[]).length} variedades</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Variedades</th>
+            <th style="text-align:right">Quantidade (Toneladas)</th>
+            <th style="text-align:right">Kilos</th>
+            <th style="text-align:right">Sacas</th>
+            <th style="text-align:right">% do armazém</th>
+            <th>Observações</th>
+          </tr></thead>
+          <tbody>${linhas || '<tr><td colspan="6" style="padding:14px;color:var(--text3);text-align:center">Sem variedades cadastradas — armazém vazio</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+initMetrics();
+initAvisos();
+initCharts();
+initBatGrid();
+renderTabela();
+initMetricsSilosVisuais();
+initFiltroVisual();
+renderSilosVisuais();
+</script>
+</body>
+</html>
